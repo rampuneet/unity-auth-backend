@@ -78,9 +78,18 @@ const authenticateToken = (req, res, next) => {
 
 // 🔹 Protected GET API
 router.get("/profile", authenticateToken, (req, res) => {
+  const exp = req.user.exp;
+
+  // Convert to milliseconds
+  const expiryDate = new Date(exp * 1000);
+
+  // Format DD/MM/YYYY
+  const formattedDate = expiryDate.toLocaleDateString("en-GB");
+  
   res.json({
     message: "Token is valid ✅",
     user: req.user,
+    expiryDate: formattedDate
   });
 });
 
