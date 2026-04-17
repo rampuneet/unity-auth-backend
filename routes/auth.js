@@ -77,20 +77,31 @@ const authenticateToken = (req, res, next) => {
 };
 
 // 🔹 Protected GET API
-router.get("/profile", authenticateToken, (req, res) => {
-  const exp = req.user.exp;
+router.get("/profile", authenticateToken, async (req, res) => {
+  try {
+    // 🔹 Fetch real user from DB
+    const user = await User.findById(req.user.id).select("-password");
 
-  // Convert to milliseconds
-  const expiryDate = new Date(exp * 1000);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-  // Format DD/MM/YYYY
-  const formattedDate = expiryDate.toLocaleDateString("en-GB");
-  
-  res.json({
-    message: "Token is valid ✅",
-    user: req.user,
-    expiryDate: formattedDate
-  });
+    const exp = req.user.exp;
+    const expiryDate = new Date(exp * 1000);
+    const formattedDate = expiryDate.toLocaleDateString("en-GB");
+
+    res.json({
+      message: "Token is valid",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      expiryDate: formattedDate,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 module.exports = router;
